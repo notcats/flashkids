@@ -20,8 +20,6 @@
   body { background: var(--bg); font-family: 'Nunito', 'Segoe UI', sans-serif; color: var(--text); }
   #app { max-width: 480px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
 
-  /* ── Utils ── */
-  .hidden { display: none !important; }
   .btn {
     border: none; cursor: pointer; font-size: 1rem; font-weight: 700;
     padding: .7rem 1.4rem; border-radius: 50px; transition: transform .1s, opacity .15s;
@@ -38,7 +36,6 @@
   input:focus, select:focus { border-color: var(--accent2); }
   .error-msg { color: var(--accent); font-size: .85rem; margin-top: .35rem; }
 
-  /* ── Top bar ── */
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 1rem 1.2rem; background: var(--card); box-shadow: 0 2px 8px rgba(0,0,0,.06);
@@ -47,15 +44,6 @@
   .topbar-logo { font-size: 1.4rem; font-weight: 900; color: var(--accent); }
   .topbar-child { font-size: .9rem; color: var(--muted); cursor: pointer; }
 
-  /* ── Auth screen ── */
-  .auth-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; gap: 1.2rem; }
-  .auth-logo { font-size: 3rem; font-weight: 900; color: var(--accent); }
-  .auth-sub { color: var(--muted); font-size: 1rem; }
-  .auth-card { width: 100%; background: var(--card); border-radius: var(--radius); padding: 1.8rem; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: .9rem; }
-  .auth-toggle { text-align: center; font-size: .9rem; color: var(--muted); }
-  .auth-toggle span { color: var(--accent); cursor: pointer; font-weight: 700; }
-
-  /* ── Child picker ── */
   .child-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1.5rem; }
   .child-card {
     background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
@@ -67,7 +55,6 @@
   .child-age { color: var(--muted); font-size: .85rem; }
   .add-child-card { border: 3px dashed #e0d8d0; background: transparent; box-shadow: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem; font-size: .95rem; font-weight: 700; }
 
-  /* ── Deck list ── */
   .deck-list { padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: .75rem; }
   .deck-row {
     background: var(--card); border-radius: var(--radius); padding: 1rem 1.3rem;
@@ -80,7 +67,6 @@
   .deck-arrow { font-size: 1.4rem; color: var(--accent2); }
   .new-deck-btn { margin: .5rem 1.2rem; }
 
-  /* ── Flash card ── */
   .flash-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; gap: 1.5rem; }
   .card-flip-container { width: 300px; height: 320px; perspective: 900px; cursor: pointer; }
   .card-inner { position: relative; width: 100%; height: 100%; transition: transform .5s; transform-style: preserve-3d; }
@@ -95,13 +81,10 @@
   .card-back { background: linear-gradient(135deg, var(--accent2), var(--accent3)); transform: rotateY(180deg); }
   .card-img { width: 100%; height: 230px; object-fit: cover; }
   .card-word-back { font-size: 2.4rem; font-weight: 900; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.18); }
-  .card-hint { color: var(--muted); font-size: .85rem; margin-top: .5rem; }
   .card-tap-hint { color: var(--muted); font-size: .8rem; }
-  .flash-controls { display: flex; gap: 1rem; }
   .flash-progress { color: var(--muted); font-size: .9rem; }
   .flash-result { display: flex; gap: .8rem; }
 
-  /* ── Modals ── */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.45);
     display: flex; align-items: flex-end; justify-content: center;
@@ -115,127 +98,57 @@
   .modal-title { font-size: 1.25rem; font-weight: 900; }
   .modal-actions { display: flex; gap: .7rem; }
 
-  /* ── Loading spinner ── */
   .spinner { text-align: center; padding: 3rem; color: var(--muted); font-size: 1.1rem; }
   .spinner::after { content: ''; display: inline-block; width: 1.4em; height: 1.4em; border: 3px solid var(--accent2); border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-left: .5rem; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── Page title ── */
   .page-title { padding: 1.2rem 1.2rem .3rem; font-size: 1.4rem; font-weight: 900; }
   .page-sub { padding: 0 1.2rem .8rem; color: var(--muted); font-size: .9rem; }
 </style>
 </head>
 <body>
 <div id="app"></div>
-
 <script>
-// ─────────────────────────────────────────
-// State
-// ─────────────────────────────────────────
+// ── State ──────────────────────────────────
 const S = {
-  scr: 'auth',        // 'auth' | 'children' | 'decks' | 'flash'
-  authMode: 'login',  // 'login' | 'register'
-  user: null,
-  tok: localStorage.getItem('tok'),
+  scr: 'children',
   children: [],
-  child: null,        // active child
-  decks: [],
-  deck: null,         // active deck
+  child: null,
+  decks: {},      // { [childId]: [{id, title, topic, language, created_at, cards:[...]}] }
+  deck: null,
   cards: [],
   flashIdx: 0,
   flipped: false,
   loading: false,
   err: '',
-  modal: null,        // 'addChild' | 'addDeck'
-  // form state
+  modal: null,
   f: {}
 };
 
-// ─────────────────────────────────────────
-// API helper
-// ─────────────────────────────────────────
-async function api(method, path, body) {
-  const opts = {
-    method,
-    headers: { 'Content-Type': 'application/json', ...(S.tok ? { Authorization: `Bearer ${S.tok}` } : {}) },
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(path, opts);
-  if (res.status === 204) return null;
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-  return data;
+// ── localStorage ───────────────────────────
+function load() {
+  try {
+    S.children = JSON.parse(localStorage.getItem('fk_children') || '[]');
+    S.decks    = JSON.parse(localStorage.getItem('fk_decks')    || '{}');
+  } catch { S.children = []; S.decks = {}; }
 }
+function saveChildren() { localStorage.setItem('fk_children', JSON.stringify(S.children)); }
+function saveDecks()    { localStorage.setItem('fk_decks',    JSON.stringify(S.decks));    }
 
-// ─────────────────────────────────────────
-// Render
-// ─────────────────────────────────────────
+// ── Render ─────────────────────────────────
 function render() {
   const app = document.getElementById('app');
-  if (S.scr === 'auth')     app.innerHTML = renderAuth();
-  else if (S.scr === 'children') app.innerHTML = renderChildren();
+  if      (S.scr === 'children') app.innerHTML = renderChildren();
   else if (S.scr === 'decks')    app.innerHTML = renderDecks();
   else if (S.scr === 'flash')    app.innerHTML = renderFlash();
-
   if (S.modal === 'addChild') app.insertAdjacentHTML('beforeend', renderAddChildModal());
   if (S.modal === 'addDeck')  app.insertAdjacentHTML('beforeend', renderAddDeckModal());
 }
 
-// ─────────────────────────────────────────
-// Auth
-// ─────────────────────────────────────────
-function renderAuth() {
-  const isReg = S.authMode === 'register';
-  return `
-  <div class="auth-wrap">
-    <div class="auth-logo">FlashKids ✨</div>
-    <div class="auth-sub">AI flashcards for little ones</div>
-    <div class="auth-card">
-      <h2 style="font-size:1.2rem;font-weight:900">${isReg ? 'Create account' : 'Welcome back'}</h2>
-      ${isReg ? `<input id="f-name" type="text" placeholder="Your name" value="${esc(S.f.name||'')}" oninput="S.f.name=this.value" />` : ''}
-      <input id="f-email" type="email" placeholder="Email" value="${esc(S.f.email||'')}" oninput="S.f.email=this.value" />
-      <input id="f-pass" type="password" placeholder="Password" value="${esc(S.f.pass||'')}" oninput="S.f.pass=this.value" onkeydown="if(event.key==='Enter')doAuth()" />
-      ${S.err ? `<div class="error-msg">${esc(S.err)}</div>` : ''}
-      <button class="btn btn-primary" onclick="doAuth()">${isReg ? 'Sign up' : 'Log in'}</button>
-    </div>
-    <div class="auth-toggle">
-      ${isReg ? 'Already have an account?' : "Don't have an account?"}
-      <span onclick="S.authMode='${isReg?'login':'register'}';S.err='';S.f={};render()">${isReg ? 'Log in' : 'Sign up'}</span>
-    </div>
-  </div>`;
-}
-
-async function doAuth() {
-  S.err = '';
-  const { email, pass, name } = S.f;
-  if (!email || !pass) { S.err = 'Email and password are required'; render(); return; }
-  if (S.authMode === 'register' && !name) { S.err = 'Name is required'; render(); return; }
-  try {
-    S.loading = true; render();
-    const path = S.authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
-    const body = S.authMode === 'register' ? { email, password: pass, name } : { email, password: pass };
-    const data = await api('POST', path, body);
-    S.tok = data.token;
-    S.user = data.user;
-    localStorage.setItem('tok', S.tok);
-    S.f = {};
-    await loadChildren();
-  } catch (e) {
-    S.err = e.message;
-    S.loading = false;
-    render();
-  }
-}
-
-// ─────────────────────────────────────────
-// Children
-// ─────────────────────────────────────────
+// ── Children ───────────────────────────────
 function renderChildren() {
   return `
-  <div class="topbar">
-    <span class="topbar-logo">FlashKids ✨</span>
-    <button class="btn btn-ghost" onclick="logout()">Log out</button>
-  </div>
+  <div class="topbar"><span class="topbar-logo">FlashKids ✨</span></div>
   <div class="page-title">Who's learning today?</div>
   <div class="child-list">
     ${S.children.map(c => `
@@ -245,8 +158,7 @@ function renderChildren() {
         <div class="child-age">${c.age} yr</div>
       </div>`).join('')}
     <div class="child-card add-child-card" onclick="S.modal='addChild';S.f={};S.err='';render()">
-      <span style="font-size:2rem">+</span>
-      <span>Add child</span>
+      <span style="font-size:2rem">+</span><span>Add child</span>
     </div>
   </div>`;
 }
@@ -264,9 +176,7 @@ function renderAddChildModal() {
         ${[1,2,3,4].map(a=>`<option value="${a}" ${S.f.age==a?'selected':''}>${a} year${a>1?'s':''}</option>`).join('')}
       </select>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-        ${avatars.map(av=>`
-          <span style="font-size:2rem;cursor:pointer;opacity:${sel===av?1:.4}" onclick="S.f.avatar='${av}';render()">${av}</span>
-        `).join('')}
+        ${avatars.map(av=>`<span style="font-size:2rem;cursor:pointer;opacity:${sel===av?1:.4}" onclick="S.f.avatar='${av}';render()">${av}</span>`).join('')}
       </div>
       ${S.err ? `<div class="error-msg">${esc(S.err)}</div>` : ''}
       <div class="modal-actions">
@@ -277,55 +187,44 @@ function renderAddChildModal() {
   </div>`;
 }
 
-async function addChild() {
+function addChild() {
   S.err = '';
   const { cname, age, avatar } = S.f;
   if (!cname || !age) { S.err = 'Name and age are required'; render(); return; }
-  try {
-    const child = await api('POST', '/api/children', { name: cname, age: parseInt(age), avatar: avatar || '🐶' });
-    S.children.push(child);
-    S.modal = null;
-    S.f = {};
-    render();
-  } catch (e) { S.err = e.message; render(); }
-}
-
-async function loadChildren() {
-  S.children = await api('GET', '/api/children');
-  S.scr = 'children';
-  S.loading = false;
+  const child = { id: uid(), name: cname.trim(), age: parseInt(age), avatar: avatar || '🐶' };
+  S.children.push(child);
+  saveChildren();
+  S.modal = null; S.f = {};
   render();
 }
 
-async function selectChild(id) {
+function selectChild(id) {
   S.child = S.children.find(c => c.id === id);
-  S.decks = await api('GET', `/api/decks?child_id=${id}`);
   S.scr = 'decks';
   render();
 }
 
-// ─────────────────────────────────────────
-// Decks
-// ─────────────────────────────────────────
+// ── Decks ──────────────────────────────────
+function getChildDecks() { return S.decks[S.child.id] || []; }
+
 function renderDecks() {
+  const decks = getChildDecks();
   return `
   <div class="topbar">
     <span class="topbar-logo">FlashKids ✨</span>
-    <span class="topbar-child" onclick="S.scr='children';render()">
-      ${esc(S.child.avatar)} ${esc(S.child.name)}
-    </span>
+    <span class="topbar-child" onclick="S.scr='children';render()">${esc(S.child.avatar)} ${esc(S.child.name)}</span>
   </div>
   <div class="page-title">Flashcard decks</div>
   <div class="page-sub">Pick a deck or create a new one</div>
   <button class="btn btn-primary new-deck-btn" onclick="S.modal='addDeck';S.f={};S.err='';render()">+ New deck</button>
   ${S.loading ? '<div class="spinner">Generating cards…</div>' : `
   <div class="deck-list">
-    ${S.decks.length === 0 ? '<div class="page-sub" style="padding-top:.5rem">No decks yet — create one!</div>' : ''}
-    ${S.decks.map(d => `
+    ${decks.length === 0 ? '<div class="page-sub" style="padding-top:.5rem">No decks yet — create one!</div>' : ''}
+    ${decks.map(d => `
       <div class="deck-row" onclick="openDeck('${d.id}')">
         <div>
           <div class="deck-title">${esc(d.title)}</div>
-          <div class="deck-meta">${new Date(d.created_at).toLocaleDateString()}</div>
+          <div class="deck-meta">${new Date(d.created_at).toLocaleDateString()} · ${d.cards.length} cards</div>
         </div>
         <span class="deck-arrow">▶</span>
       </div>`).join('')}
@@ -359,38 +258,33 @@ async function createDeck() {
   S.err = '';
   const { topic, lang, count } = S.f;
   if (!topic) { S.err = 'Topic is required'; render(); return; }
-  S.modal = null;
-  S.loading = true;
-  render();
+  S.modal = null; S.loading = true; render();
   try {
     const data = await api('POST', '/api/decks', {
-      child_id: S.child.id,
-      topic,
-      language: lang || 'en',
-      card_count: parseInt(count) || 6,
+      topic, language: lang || 'en', card_count: parseInt(count) || 6,
     });
-    S.decks.unshift(data.deck);
+    const deck = {
+      id: uid(), title: topic, topic, language: lang || 'en',
+      created_at: new Date().toISOString(), cards: data.cards,
+    };
+    if (!S.decks[S.child.id]) S.decks[S.child.id] = [];
+    S.decks[S.child.id].unshift(deck);
+    saveDecks();
     S.loading = false;
-    await openDeck(data.deck.id, data.cards);
+    openDeck(deck.id);
   } catch (e) {
-    S.err = e.message;
-    S.loading = false;
-    render();
+    S.err = e.message; S.loading = false; render();
   }
 }
 
-async function openDeck(deckId, preloadedCards) {
-  S.deck = S.decks.find(d => d.id === deckId);
-  S.cards = preloadedCards || await api('GET', `/api/cards?deck_id=${deckId}`);
-  S.flashIdx = 0;
-  S.flipped = false;
-  S.scr = 'flash';
+function openDeck(deckId) {
+  S.deck = getChildDecks().find(d => d.id === deckId);
+  S.cards = S.deck.cards;
+  S.flashIdx = 0; S.flipped = false; S.scr = 'flash';
   render();
 }
 
-// ─────────────────────────────────────────
-// Flashcard session
-// ─────────────────────────────────────────
+// ── Flash ──────────────────────────────────
 function renderFlash() {
   const total = S.cards.length;
   if (total === 0) return `<div class="spinner">No cards</div>`;
@@ -438,77 +332,52 @@ function renderFlash() {
     <div class="flash-result">
       <button class="btn btn-primary" onclick="recordResult(true)">✓ Got it!</button>
       <button class="btn" style="background:#ffeaea;color:var(--accent)" onclick="recordResult(false)">✗ Again</button>
-    </div>` : `<div class="card-hint">Tap the card to flip</div>`}
+    </div>` : `<div style="color:var(--muted);font-size:.85rem">Tap the card to flip</div>`}
   </div>`;
 }
 
 function flipCard() {
-  S.flipped = !S.flipped;
-  render();
-  if (S.flipped) {
-    const card = S.cards[S.flashIdx];
-    speak(card.word, card.language);
-  }
+  S.flipped = !S.flipped; render();
+  if (S.flipped) speak(S.cards[S.flashIdx].word, S.cards[S.flashIdx].language);
 }
 
 function speak(word, lang) {
   if (!window.speechSynthesis) return;
   const utt = new SpeechSynthesisUtterance(word);
-  utt.lang = lang || 'en-US';
-  utt.rate = 0.85;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(utt);
+  utt.lang = lang || 'en-US'; utt.rate = 0.85;
+  speechSynthesis.cancel(); speechSynthesis.speak(utt);
 }
 
-async function recordResult(correct) {
+function recordResult(correct) {
   const card = S.cards[S.flashIdx];
-  try {
-    await api('PATCH', `/api/cards/${card.id}/result`, { correct });
-    card.seen += 1;
-    if (correct) card.correct += 1;
-  } catch { /* ignore */ }
-  S.flashIdx += 1;
-  S.flipped = false;
-  render();
+  card.seen += 1; if (correct) card.correct += 1;
+  saveDecks();
+  S.flashIdx += 1; S.flipped = false; render();
 }
 
-// ─────────────────────────────────────────
-// Misc helpers
-// ─────────────────────────────────────────
+// ── Helpers ────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  if (res.status === 204) return null;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
 function esc(str) {
   return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
 const WORD_EMOJI = { cat:'🐱',dog:'🐶',apple:'🍎',banana:'🍌',car:'🚗',sun:'☀️',moon:'🌙',fish:'🐟',bird:'🐦',flower:'🌸' };
-function randomEmoji(word) {
-  return WORD_EMOJI[word?.toLowerCase()] || '✨';
-}
+function randomEmoji(word) { return WORD_EMOJI[word?.toLowerCase()] || '✨'; }
 
-function logout() {
-  S.tok = null; S.user = null; S.child = null;
-  localStorage.removeItem('tok');
-  S.scr = 'auth'; S.f = {}; render();
-}
-
-// ─────────────────────────────────────────
-// Boot
-// ─────────────────────────────────────────
-async function boot() {
-  if (S.tok) {
-    try {
-      S.user = await api('GET', '/api/auth/me');
-      await loadChildren();
-      return;
-    } catch {
-      localStorage.removeItem('tok');
-      S.tok = null;
-    }
-  }
-  S.scr = 'auth';
-  render();
-}
-
-boot();
+// ── Boot ───────────────────────────────────
+load();
+render();
 </script>
 </body>
 </html>
