@@ -8,7 +8,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api/decks', require('./src/routes/decks'));
+app.use('/api/auth',     require('./src/routes/auth'));
+app.use('/api/children', require('./src/routes/children'));
+app.use('/api/cards',    require('./src/routes/cards'));
+app.use('/api/decks',    require('./src/routes/decks'));
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
